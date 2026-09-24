@@ -316,7 +316,7 @@
         return;
       }
 
-      var honey = form.querySelector("[name='website']");
+      var honey = form.querySelector("[name='_honey']");
       if (honey && honey.value) {
         setStatus("Verzenden geblokkeerd.", true);
         return;
@@ -334,42 +334,24 @@
         mailtoHref +
         '">Open mail-app</a>';
 
-      /* Gsm / in-app: FormSubmit (geen EmailJS-fetch) */
-      if (isMobileDevice() || isInAppBrowser()) {
-        if (submitBtn) submitBtn.disabled = true;
-        setStatus("Bezig met versturen…");
-        submitViaFormSubmit(values);
-        return;
+      var subjectField = form.querySelector("#fs-subject");
+      if (subjectField) {
+        subjectField.value = "TEAMBKLF · " + values.onderwerp + " · " + values.naam;
       }
 
-      var templateParams = {
-        naam: values.naam,
-        name: "TEAMBKLF Garage",
-        email: values.email,
-        onderwerp: values.onderwerp,
-        bericht: values.bericht,
-        title: "TEAMBKLF · " + values.onderwerp + " · " + values.naam
-      };
-
+      /* Native form POST naar FormSubmit — werkt op gsm zonder EmailJS/fetch */
       if (submitBtn) submitBtn.disabled = true;
-      setStatus("Bezig met versturen…");
-
-      sendViaEmailJs(templateParams)
-        .then(function () {
-          form.classList.add("is-sent");
-          setStatus("Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.");
-          form.reset();
-        })
-        .catch(function () {
-          setStatus(
-            "Verzenden via de site lukte niet. Tik hieronder om via je mail-app te sturen, of DM @teambklf.garage.<br>" +
-              mailtoBtn,
-            true
-          );
-        })
-        .finally(function () {
-          if (submitBtn) submitBtn.disabled = false;
-        });
+      setStatus("Bezig met versturen… even geduld");
+      try {
+        HTMLFormElement.prototype.submit.call(form);
+      } catch (err) {
+        if (submitBtn) submitBtn.disabled = false;
+        setStatus(
+          "Automatisch versturen lukte niet. Tik op de knop hieronder of DM @teambklf.garage.<br>" +
+            mailtoBtn,
+          true
+        );
+      }
     });
   }
 })();
