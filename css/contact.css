@@ -292,6 +292,17 @@
   color: #ffc9c9;
 }
 
+.form-status a {
+  color: var(--white);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.form-status a:hover {
+  color: var(--purple-soft);
+}
+
 .form-status:focus {
   outline: 1px solid var(--purple);
   outline-offset: 2px;
