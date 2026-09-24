@@ -277,21 +277,6 @@
   pointer-events: none;
 }
 
-.inapp-banner {
-  margin: 0;
-  padding: 0.85rem 5vw;
-  background: rgba(196, 77, 255, 0.18);
-  border-bottom: 1px solid var(--line);
-  color: var(--purple-soft);
-  font-size: 0.88rem;
-  text-align: center;
-  line-height: 1.45;
-}
-
-.inapp-banner[hidden] {
-  display: none !important;
-}
-
 .form-status {
   margin-top: 0.4rem;
   padding: 0.9rem 1rem;
@@ -305,17 +290,6 @@
   border-color: rgba(255, 120, 120, 0.55);
   background: rgba(255, 80, 80, 0.12);
   color: #ffc9c9;
-}
-
-.form-status a {
-  color: var(--white);
-  font-weight: 700;
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.form-status a:hover {
-  color: var(--purple-soft);
 }
 
 .form-status:focus {

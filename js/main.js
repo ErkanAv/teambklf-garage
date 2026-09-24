@@ -87,28 +87,8 @@
     });
   }
 
-  /* Contact: EmailJS op desktop, FormSubmit op gsm (EmailJS faalt vaak op iOS) */
-  var EMAILJS_PUBLIC_KEY = "0oQmkEsCd3Wez9k9B";
-  var EMAILJS_SERVICE_ID = "service_81f4keu";
-  var EMAILJS_TEMPLATE_ID = "template_i2sv11w";
-  var CONTACT_MAIL = "teambklf@gmail.com";
-
-  function isInAppBrowser() {
-    var ua = navigator.userAgent || "";
-    return /WhatsApp|Instagram|FBAN|FBAV|FB_IAB|Line\/|Twitter|Snapchat/i.test(ua);
-  }
-
-  function isMobileDevice() {
-    var ua = navigator.userAgent || "";
-    if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) return true;
-    if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) return true;
-    return false;
-  }
-
-  var inappBanner = document.getElementById("inapp-banner");
-  if (inappBanner && isInAppBrowser()) {
-    inappBanner.hidden = false;
-  }
+  /* Contactformulier — Web3Forms (zelfde flow op pc én gsm, geen redirects) */
+  var WEB3FORMS_ACCESS_KEY = "REPLACE_WITH_WEB3FORMS_KEY";
 
   var form = document.querySelector(".contact-form");
   if (form) {
@@ -123,16 +103,6 @@
       ? Array.prototype.slice.call(selectMenu.querySelectorAll('[role="option"]'))
       : [];
     var selectCloseTimer = null;
-
-    if (new URLSearchParams(window.location.search).get("sent") === "1") {
-      form.classList.add("is-sent");
-      if (status) {
-        status.hidden = false;
-        status.classList.remove("is-error");
-        status.textContent =
-          "Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.";
-      }
-    }
 
     function setCustomSelectValue(value) {
       if (!selectInput || !selectValue) return;
@@ -218,7 +188,7 @@
     function setStatus(message, isError) {
       if (!status) return;
       status.hidden = false;
-      status.innerHTML = message;
+      status.textContent = message;
       status.classList.toggle("is-error", !!isError);
       try {
         status.focus({ preventScroll: true });
@@ -227,27 +197,10 @@
       }
     }
 
-    function buildMailto(params) {
-      var subject = encodeURIComponent(
-        "TEAMBKLF · " + params.onderwerp + " · " + params.naam
-      );
-      var body = encodeURIComponent(
-        "Naam: " +
-          params.naam +
-          "\nE-mail: " +
-          params.email +
-          "\nOnderwerp: " +
-          params.onderwerp +
-          "\n\n" +
-          params.bericht
-      );
-      return "mailto:" + CONTACT_MAIL + "?subject=" + subject + "&body=" + body;
-    }
-
     function readFormValues() {
-      var nameField = form.querySelector("#naam") || form.elements.namedItem("name");
-      var emailField = form.querySelector("#email") || form.elements.namedItem("email");
-      var messageField = form.querySelector("#bericht") || form.elements.namedItem("message");
+      var nameField = form.querySelector("#naam");
+      var emailField = form.querySelector("#email");
+      var messageField = form.querySelector("#bericht");
       var onderwerpField = form.querySelector("#onderwerp");
 
       return {
@@ -258,27 +211,6 @@
       };
     }
 
-    function sendViaEmailJs(templateParams) {
-      return fetch("https://api.emailjs.com/api/v1.0/email/send", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          service_id: EMAILJS_SERVICE_ID,
-          template_id: EMAILJS_TEMPLATE_ID,
-          user_id: EMAILJS_PUBLIC_KEY,
-          template_params: templateParams
-        })
-      }).then(function (response) {
-        if (response.ok) return response.text();
-        return response.text().then(function (text) {
-          var err = new Error(text || "HTTP " + response.status);
-          err.status = response.status;
-          err.text = text || "HTTP " + response.status;
-          throw err;
-        });
-      });
-    }
-
     form.addEventListener("submit", function (event) {
       event.preventDefault();
 
@@ -287,8 +219,8 @@
         return;
       }
 
-      var honey = form.querySelector("[name='website']");
-      if (honey && honey.value) {
+      var honey = form.querySelector("[name='botcheck']");
+      if (honey && honey.checked) {
         setStatus("Verzenden geblokkeerd.", true);
         return;
       }
@@ -299,52 +231,46 @@
         return;
       }
 
-      var mailtoHref = buildMailto(values);
-      var mailtoBtn =
-        '<a class="btn" style="margin-top:0.75rem;display:inline-flex" href="' +
-        mailtoHref +
-        '">Open mail-app &amp; verstuur</a>';
-
-      /*
-       * Gsm: EmailJS fetch faalt vaak (Load failed), FormSubmit had SSL-problemen.
-       * mailto synchroon in de click/submit = iOS laat het toe.
-       */
-      if (isMobileDevice() || isInAppBrowser()) {
-        setStatus(
-          "Je mail-app opent met je bericht klaar. Tik daar op <strong>versturen</strong>. Werkt dat niet? " +
-            mailtoBtn +
-            " of DM @teambklf.garage.",
-          false
-        );
-        form.classList.add("is-sent");
-        window.location.href = mailtoHref;
+      if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY.indexOf("REPLACE_") === 0) {
+        setStatus("Formulier is nog niet geconfigureerd. Probeer later opnieuw.", true);
         return;
       }
-
-      var templateParams = {
-        naam: values.naam,
-        name: "TEAMBKLF Garage",
-        email: values.email,
-        onderwerp: values.onderwerp,
-        bericht: values.bericht,
-        title: "TEAMBKLF · " + values.onderwerp + " · " + values.naam
-      };
 
       if (submitBtn) submitBtn.disabled = true;
       setStatus("Bezig met versturen…");
 
-      sendViaEmailJs(templateParams)
+      fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          name: values.naam,
+          email: values.email,
+          subject: "TEAMBKLF · " + values.onderwerp + " · " + values.naam,
+          onderwerp: values.onderwerp,
+          message: values.bericht,
+          from_name: "TEAMBKLF Garage"
+        })
+      })
+        .then(function (response) {
+          return response.json().then(function (data) {
+            if (!response.ok || !data.success) {
+              throw new Error((data && data.message) || "Verzenden mislukt");
+            }
+            return data;
+          });
+        })
         .then(function () {
           form.classList.add("is-sent");
           setStatus("Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.");
           form.reset();
+          setCustomSelectValue("Onderhoud");
         })
         .catch(function () {
-          setStatus(
-            "Verzenden via de site lukte niet. Tik op de knop of DM @teambklf.garage.<br>" +
-              mailtoBtn,
-            true
-          );
+          setStatus("Verzenden lukte niet. Controleer je verbinding en probeer opnieuw.", true);
         })
         .finally(function () {
           if (submitBtn) submitBtn.disabled = false;
