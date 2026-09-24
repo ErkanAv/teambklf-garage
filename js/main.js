@@ -88,7 +88,7 @@
   }
 
   /* Contactformulier — Web3Forms (zelfde flow op pc én gsm, geen redirects) */
-  var WEB3FORMS_ACCESS_KEY = "REPLACE_WITH_WEB3FORMS_KEY";
+  var WEB3FORMS_ACCESS_KEY = "32f66c17-775d-47b1-8612-02cb041b6620";
 
   var form = document.querySelector(".contact-form");
   if (form) {
