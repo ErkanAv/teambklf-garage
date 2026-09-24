@@ -1,0 +1,222 @@
+.hero {
+  position: relative;
+  min-height: calc(100vh - var(--header-h));
+  display: grid;
+  place-items: center;
+  padding: 4.5rem 7vw 6.5rem;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 18% 20%, rgba(196, 77, 255, 0.28), transparent 34%),
+    radial-gradient(circle at 82% 78%, rgba(122, 31, 212, 0.22), transparent 40%),
+    #050308;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: url("../assets/logo/teambklf-logo.jpg");
+  background-size: 70vmin;
+  background-repeat: no-repeat;
+  background-position: 92% 48%;
+  opacity: 0.22;
+  pointer-events: none;
+  contain: strict;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  inset: auto 0 0;
+  height: 140px;
+  background: linear-gradient(transparent, var(--black));
+  pointer-events: none;
+}
+
+.hero-inner {
+  position: relative;
+  z-index: 1;
+  width: min(1140px, 100%);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2.4rem;
+  align-items: end;
+}
+
+.hero-inner > div > * {
+  animation: page-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero-inner .kicker {
+  animation-delay: 0.05s;
+}
+
+.hero-inner h1 {
+  animation-delay: 0.16s;
+}
+
+.hero-inner .hero-sub {
+  animation-delay: 0.3s;
+}
+
+.hero-inner .btn {
+  animation-delay: 0.44s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-inner > div > * {
+    animation: none;
+  }
+}
+
+.hero h1 {
+  font-family: "Bebas Neue", "Arial Narrow", sans-serif;
+  font-size: clamp(3.6rem, 10vw, 8rem);
+  line-height: 0.84;
+  letter-spacing: 0.03em;
+  text-shadow: 0 18px 50px rgba(0, 0, 0, 0.55);
+}
+
+.hero-sub {
+  margin: 1.2rem 0 2rem;
+  max-width: 36rem;
+  color: #e6dced;
+  font-size: 1.05rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  padding: 0 7vw;
+  margin-top: -2.4rem;
+  position: relative;
+  z-index: 2;
+}
+
+.stat {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  padding: 1.4rem 1.2rem;
+  text-align: center;
+}
+
+.stat strong {
+  display: block;
+  font-family: "Bebas Neue", sans-serif;
+  font-size: 2.2rem;
+  letter-spacing: 0.06em;
+  color: var(--purple-soft);
+}
+
+.stat span {
+  color: var(--muted);
+  font-size: 0.85rem;
+}
+
+.cta-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  justify-content: center;
+  margin-top: 0.2rem;
+}
+
+.about {
+  display: grid;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 3.4rem;
+  align-items: center;
+  background:
+    linear-gradient(180deg, transparent, rgba(196, 77, 255, 0.05)),
+    var(--black-soft);
+}
+
+.about-visual {
+  min-height: 420px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background:
+    linear-gradient(120deg, rgba(5, 3, 8, 0.08), rgba(122, 31, 212, 0.18)),
+    url("../assets/images/over-ons.jpg") center / cover no-repeat;
+  box-shadow: inset 0 0 80px rgba(0, 0, 0, 0.25);
+}
+
+.services-preview {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.8rem;
+  margin-top: 2.2rem;
+}
+
+.service-chip {
+  border: 1px solid var(--line);
+  padding: 1.05rem 0.7rem;
+  text-align: center;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+  color: var(--purple-soft);
+  background: rgba(196, 77, 255, 0.05);
+  transition: transform 0.18s ease, background 0.18s ease;
+}
+
+.service-chip:hover {
+  transform: translate3d(0, -3px, 0);
+  background: rgba(196, 77, 255, 0.16);
+}
+
+.cta-band {
+  min-height: 420px;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 4rem 1.5rem;
+  background:
+    linear-gradient(rgba(5, 3, 8, 0.72), rgba(5, 3, 8, 0.86)),
+    radial-gradient(circle at center, rgba(196, 77, 255, 0.5), #050308 68%);
+  border-block: 1px solid var(--line);
+}
+
+.cta-band p {
+  margin: 0.7rem auto 1.8rem;
+  max-width: 34rem;
+}
+
+@media (max-width: 900px) {
+  .hero-inner,
+  .about,
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .services-preview {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .hero::before {
+    opacity: 0.12;
+    background-position: center 10%;
+    background-size: 95vmin;
+  }
+
+  .about-visual {
+    min-height: 260px;
+  }
+
+  .stats {
+    margin-top: 0;
+    padding-top: 1.5rem;
+  }
+}
+
+@media (max-width: 520px) {
+  .services-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding: 3.2rem 5vw 4.5rem;
+    min-height: calc(100svh - var(--header-h));
+  }
+}
