@@ -87,7 +87,7 @@
     });
   }
 
-  /* EmailJS — REST API (geen SDK nodig; betrouwbaarder op gsm) */
+  /* Contact: EmailJS op desktop, FormSubmit op gsm (EmailJS faalt vaak op iOS) */
   var EMAILJS_PUBLIC_KEY = "0oQmkEsCd3Wez9k9B";
   var EMAILJS_SERVICE_ID = "service_81f4keu";
   var EMAILJS_TEMPLATE_ID = "template_i2sv11w";
@@ -96,6 +96,13 @@
   function isInAppBrowser() {
     var ua = navigator.userAgent || "";
     return /WhatsApp|Instagram|FBAN|FBAV|FB_IAB|Line\/|Twitter|Snapchat/i.test(ua);
+  }
+
+  function isMobileDevice() {
+    var ua = navigator.userAgent || "";
+    if (/Mobi|Android|iPhone|iPad|iPod/i.test(ua)) return true;
+    if (navigator.maxTouchPoints > 1 && /Mac/.test(navigator.platform || "")) return true;
+    return false;
   }
 
   var inappBanner = document.getElementById("inapp-banner");
@@ -116,6 +123,16 @@
       ? Array.prototype.slice.call(selectMenu.querySelectorAll('[role="option"]'))
       : [];
     var selectCloseTimer = null;
+
+    if (new URLSearchParams(window.location.search).get("sent") === "1") {
+      form.classList.add("is-sent");
+      if (status) {
+        status.hidden = false;
+        status.classList.remove("is-error");
+        status.textContent =
+          "Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.";
+      }
+    }
 
     function setCustomSelectValue(value) {
       if (!selectInput || !selectValue) return;
@@ -227,10 +244,6 @@
       return "mailto:" + CONTACT_MAIL + "?subject=" + subject + "&body=" + body;
     }
 
-    function openMailto(href) {
-      window.location.href = href;
-    }
-
     function readFormValues() {
       var nameField = form.querySelector("#naam") || form.elements.namedItem("name");
       var emailField = form.querySelector("#email") || form.elements.namedItem("email");
@@ -266,6 +279,35 @@
       });
     }
 
+    /* Native POST — werkt op iOS waar fetch naar EmailJS faalt */
+    function submitViaFormSubmit(values) {
+      var nextUrl =
+        window.location.href.split("?")[0].split("#")[0] + "?sent=1";
+      var fields = {
+        name: values.naam,
+        email: values.email,
+        onderwerp: values.onderwerp,
+        message: values.bericht,
+        _subject: "TEAMBKLF · " + values.onderwerp + " · " + values.naam,
+        _captcha: "false",
+        _template: "table",
+        _next: nextUrl
+      };
+      var f = document.createElement("form");
+      f.method = "POST";
+      f.action = "https://formsubmit.co/" + CONTACT_MAIL;
+      f.style.display = "none";
+      Object.keys(fields).forEach(function (key) {
+        var input = document.createElement("input");
+        input.type = "hidden";
+        input.name = key;
+        input.value = fields[key];
+        f.appendChild(input);
+      });
+      document.body.appendChild(f);
+      f.submit();
+    }
+
     form.addEventListener("submit", function (event) {
       event.preventDefault();
 
@@ -287,22 +329,16 @@
       }
 
       var mailtoHref = buildMailto(values);
-      var mailtoLink =
-        '<a href="' +
+      var mailtoBtn =
+        '<a class="btn" style="margin-top:0.75rem" href="' +
         mailtoHref +
-        '">Stuur via je mail-app</a>';
+        '">Open mail-app</a>';
 
-      /* In-app browsers (WhatsApp/Insta/…) blokkeren EmailJS vaak → mail-app */
-      if (isInAppBrowser()) {
-        setStatus(
-          "Deze browser blokkeert het formulier. We openen je mail-app… Of " +
-            mailtoLink +
-            " / DM @teambklf.garage.",
-          true
-        );
-        window.setTimeout(function () {
-          openMailto(mailtoHref);
-        }, 400);
+      /* Gsm / in-app: FormSubmit (geen EmailJS-fetch) */
+      if (isMobileDevice() || isInAppBrowser()) {
+        if (submitBtn) submitBtn.disabled = true;
+        setStatus("Bezig met versturen…");
+        submitViaFormSubmit(values);
         return;
       }
 
@@ -324,20 +360,12 @@
           setStatus("Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.");
           form.reset();
         })
-        .catch(function (error) {
-          var detail =
-            (error && (error.text || error.message)) || "Probeer later opnieuw.";
+        .catch(function () {
           setStatus(
-            "Verzenden lukte niet op dit toestel. " +
-              mailtoLink +
-              " of DM @teambklf.garage. (" +
-              detail +
-              ")",
+            "Verzenden via de site lukte niet. Tik hieronder om via je mail-app te sturen, of DM @teambklf.garage.<br>" +
+              mailtoBtn,
             true
           );
-          window.setTimeout(function () {
-            openMailto(mailtoHref);
-          }, 900);
         })
         .finally(function () {
           if (submitBtn) submitBtn.disabled = false;
