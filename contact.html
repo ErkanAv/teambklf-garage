@@ -16,7 +16,7 @@
 <body>
   <a class="skip-link" href="#main">Ga naar inhoud</a>
   <p class="inapp-banner" id="inapp-banner" hidden>
-    Open deze pagina in <strong>Safari</strong> of <strong>Chrome</strong> (niet in WhatsApp) voor het contactformulier — of mail/DM ons rechtstreeks.
+    Tip: open in <strong>Safari</strong> of <strong>Chrome</strong> als WhatsApp/Insta het formulier blokkeert — of DM @teambklf.garage.
   </p>
 
   <header class="site-header">
@@ -81,18 +81,9 @@
         </ul>
       </aside>
 
-      <form
-        class="contact-form"
-        action="https://formsubmit.co/teambklf@gmail.com"
-        method="POST"
-        novalidate
-      >
+      <form class="contact-form" novalidate>
         <h2 class="contact-form-title">Bericht sturen</h2>
-        <input type="text" name="_honey" class="honey" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
-        <input type="hidden" name="_captcha" value="false">
-        <input type="hidden" name="_template" value="table">
-        <input type="hidden" name="_next" value="https://erkanav.github.io/teambklf-garage/contact.html?sent=1">
-        <input type="hidden" name="_subject" id="fs-subject" value="TEAMBKLF contact">
+        <input type="text" name="website" class="honey" value="" tabindex="-1" autocomplete="off" aria-hidden="true">
 
         <label for="naam">Naam</label>
         <input id="naam" name="name" type="text" required autocomplete="name">
@@ -133,7 +124,7 @@
 
         <button class="btn" type="submit">Verstuur</button>
         <p class="form-status" hidden tabindex="-1" role="status" aria-live="polite"></p>
-        <p class="muted form-note">Berichten komen in onze inbox. Op gsm kan je even naar FormSubmit doorgestuurd worden.</p>
+        <p class="muted form-note">Op pc gaat dit rechtstreeks naar onze inbox. Op gsm opent je mail-app met het bericht klaar — tik daarna op verzenden. Of DM @teambklf.garage.</p>
       </form>
     </section>
   </main>
@@ -163,6 +154,6 @@
     </p>
   </footer>
 
-  <script src="js/main.js?v=6" defer></script>
+  <script src="js/main.js?v=7" defer></script>
 </body>
 </html>

@@ -279,35 +279,6 @@
       });
     }
 
-    /* Native POST — werkt op iOS waar fetch naar EmailJS faalt */
-    function submitViaFormSubmit(values) {
-      var nextUrl =
-        window.location.href.split("?")[0].split("#")[0] + "?sent=1";
-      var fields = {
-        name: values.naam,
-        email: values.email,
-        onderwerp: values.onderwerp,
-        message: values.bericht,
-        _subject: "TEAMBKLF · " + values.onderwerp + " · " + values.naam,
-        _captcha: "false",
-        _template: "table",
-        _next: nextUrl
-      };
-      var f = document.createElement("form");
-      f.method = "POST";
-      f.action = "https://formsubmit.co/" + CONTACT_MAIL;
-      f.style.display = "none";
-      Object.keys(fields).forEach(function (key) {
-        var input = document.createElement("input");
-        input.type = "hidden";
-        input.name = key;
-        input.value = fields[key];
-        f.appendChild(input);
-      });
-      document.body.appendChild(f);
-      f.submit();
-    }
-
     form.addEventListener("submit", function (event) {
       event.preventDefault();
 
@@ -316,7 +287,7 @@
         return;
       }
 
-      var honey = form.querySelector("[name='_honey']");
+      var honey = form.querySelector("[name='website']");
       if (honey && honey.value) {
         setStatus("Verzenden geblokkeerd.", true);
         return;
@@ -330,28 +301,54 @@
 
       var mailtoHref = buildMailto(values);
       var mailtoBtn =
-        '<a class="btn" style="margin-top:0.75rem" href="' +
+        '<a class="btn" style="margin-top:0.75rem;display:inline-flex" href="' +
         mailtoHref +
-        '">Open mail-app</a>';
+        '">Open mail-app &amp; verstuur</a>';
 
-      var subjectField = form.querySelector("#fs-subject");
-      if (subjectField) {
-        subjectField.value = "TEAMBKLF · " + values.onderwerp + " · " + values.naam;
-      }
-
-      /* Native form POST naar FormSubmit — werkt op gsm zonder EmailJS/fetch */
-      if (submitBtn) submitBtn.disabled = true;
-      setStatus("Bezig met versturen… even geduld");
-      try {
-        HTMLFormElement.prototype.submit.call(form);
-      } catch (err) {
-        if (submitBtn) submitBtn.disabled = false;
+      /*
+       * Gsm: EmailJS fetch faalt vaak (Load failed), FormSubmit had SSL-problemen.
+       * mailto synchroon in de click/submit = iOS laat het toe.
+       */
+      if (isMobileDevice() || isInAppBrowser()) {
         setStatus(
-          "Automatisch versturen lukte niet. Tik op de knop hieronder of DM @teambklf.garage.<br>" +
-            mailtoBtn,
-          true
+          "Je mail-app opent met je bericht klaar. Tik daar op <strong>versturen</strong>. Werkt dat niet? " +
+            mailtoBtn +
+            " of DM @teambklf.garage.",
+          false
         );
+        form.classList.add("is-sent");
+        window.location.href = mailtoHref;
+        return;
       }
+
+      var templateParams = {
+        naam: values.naam,
+        name: "TEAMBKLF Garage",
+        email: values.email,
+        onderwerp: values.onderwerp,
+        bericht: values.bericht,
+        title: "TEAMBKLF · " + values.onderwerp + " · " + values.naam
+      };
+
+      if (submitBtn) submitBtn.disabled = true;
+      setStatus("Bezig met versturen…");
+
+      sendViaEmailJs(templateParams)
+        .then(function () {
+          form.classList.add("is-sent");
+          setStatus("Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.");
+          form.reset();
+        })
+        .catch(function () {
+          setStatus(
+            "Verzenden via de site lukte niet. Tik op de knop of DM @teambklf.garage.<br>" +
+              mailtoBtn,
+            true
+          );
+        })
+        .finally(function () {
+          if (submitBtn) submitBtn.disabled = false;
+        });
     });
   }
 })();
