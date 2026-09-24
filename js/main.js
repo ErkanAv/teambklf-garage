@@ -87,7 +87,10 @@
     });
   }
 
-  /* Contactformulier — Web3Forms (zelfde flow op pc én gsm, geen redirects) */
+  /* Contact: EmailJS (branded template) → fallback Web3Forms (betrouwbaar op gsm) */
+  var EMAILJS_PUBLIC_KEY = "0oQmkEsCd3Wez9k9B";
+  var EMAILJS_SERVICE_ID = "service_81f4keu";
+  var EMAILJS_TEMPLATE_ID = "template_i2sv11w";
   var WEB3FORMS_ACCESS_KEY = "32f66c17-775d-47b1-8612-02cb041b6620";
 
   var form = document.querySelector(".contact-form");
@@ -211,6 +214,57 @@
       };
     }
 
+    function sendViaEmailJs(values) {
+      return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: {
+            naam: values.naam,
+            name: "TEAMBKLF Garage",
+            email: values.email,
+            onderwerp: values.onderwerp,
+            bericht: values.bericht,
+            title: "TEAMBKLF · " + values.onderwerp + " · " + values.naam
+          }
+        })
+      }).then(function (response) {
+        if (response.ok) return response.text();
+        return response.text().then(function (text) {
+          throw new Error(text || "EmailJS HTTP " + response.status);
+        });
+      });
+    }
+
+    function sendViaWeb3Forms(values) {
+      return fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json"
+        },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_ACCESS_KEY,
+          name: values.naam,
+          email: values.email,
+          subject: "TEAMBKLF · " + values.onderwerp + " · " + values.naam,
+          onderwerp: values.onderwerp,
+          message: values.bericht,
+          from_name: "TEAMBKLF Garage"
+        })
+      }).then(function (response) {
+        return response.json().then(function (data) {
+          if (!response.ok || !data.success) {
+            throw new Error((data && data.message) || "Web3Forms mislukt");
+          }
+          return data;
+        });
+      });
+    }
+
     form.addEventListener("submit", function (event) {
       event.preventDefault();
 
@@ -231,37 +285,12 @@
         return;
       }
 
-      if (!WEB3FORMS_ACCESS_KEY || WEB3FORMS_ACCESS_KEY.indexOf("REPLACE_") === 0) {
-        setStatus("Formulier is nog niet geconfigureerd. Probeer later opnieuw.", true);
-        return;
-      }
-
       if (submitBtn) submitBtn.disabled = true;
       setStatus("Bezig met versturen…");
 
-      fetch("https://api.web3forms.com/submit", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json"
-        },
-        body: JSON.stringify({
-          access_key: WEB3FORMS_ACCESS_KEY,
-          name: values.naam,
-          email: values.email,
-          subject: "TEAMBKLF · " + values.onderwerp + " · " + values.naam,
-          onderwerp: values.onderwerp,
-          message: values.bericht,
-          from_name: "TEAMBKLF Garage"
-        })
-      })
-        .then(function (response) {
-          return response.json().then(function (data) {
-            if (!response.ok || !data.success) {
-              throw new Error((data && data.message) || "Verzenden mislukt");
-            }
-            return data;
-          });
+      sendViaEmailJs(values)
+        .catch(function () {
+          return sendViaWeb3Forms(values);
         })
         .then(function () {
           form.classList.add("is-sent");
