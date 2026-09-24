@@ -87,11 +87,21 @@
     });
   }
 
-  /* EmailJS — service/template IDs from dashboard */
+  /* EmailJS — REST API (geen SDK nodig; betrouwbaarder op gsm) */
   var EMAILJS_PUBLIC_KEY = "0oQmkEsCd3Wez9k9B";
   var EMAILJS_SERVICE_ID = "service_81f4keu";
   var EMAILJS_TEMPLATE_ID = "template_i2sv11w";
   var CONTACT_MAIL = "teambklf@gmail.com";
+
+  function isInAppBrowser() {
+    var ua = navigator.userAgent || "";
+    return /WhatsApp|Instagram|FBAN|FBAV|FB_IAB|Line\/|Twitter|Snapchat/i.test(ua);
+  }
+
+  var inappBanner = document.getElementById("inapp-banner");
+  if (inappBanner && isInAppBrowser()) {
+    inappBanner.hidden = false;
+  }
 
   var form = document.querySelector(".contact-form");
   if (form) {
@@ -106,16 +116,6 @@
       ? Array.prototype.slice.call(selectMenu.querySelectorAll('[role="option"]'))
       : [];
     var selectCloseTimer = null;
-    var emailjsReady = false;
-
-    function ensureEmailJs() {
-      if (!window.emailjs) return false;
-      if (!emailjsReady) {
-        window.emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-        emailjsReady = true;
-      }
-      return true;
-    }
 
     function setCustomSelectValue(value) {
       if (!selectInput || !selectValue) return;
@@ -227,12 +227,8 @@
       return "mailto:" + CONTACT_MAIL + "?subject=" + subject + "&body=" + body;
     }
 
-    function errorMessage(error) {
-      if (!error) return "Probeer later opnieuw.";
-      if (error.text) return String(error.text);
-      if (error.message) return String(error.message);
-      if (error.status) return "Foutcode " + error.status;
-      return "Probeer later opnieuw.";
+    function openMailto(href) {
+      window.location.href = href;
     }
 
     function readFormValues() {
@@ -247,6 +243,27 @@
         onderwerp: onderwerpField && onderwerpField.value ? onderwerpField.value : "Andere vraag",
         bericht: messageField && messageField.value ? messageField.value.trim() : ""
       };
+    }
+
+    function sendViaEmailJs(templateParams) {
+      return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          service_id: EMAILJS_SERVICE_ID,
+          template_id: EMAILJS_TEMPLATE_ID,
+          user_id: EMAILJS_PUBLIC_KEY,
+          template_params: templateParams
+        })
+      }).then(function (response) {
+        if (response.ok) return response.text();
+        return response.text().then(function (text) {
+          var err = new Error(text || "HTTP " + response.status);
+          err.status = response.status;
+          err.text = text || "HTTP " + response.status;
+          throw err;
+        });
+      });
     }
 
     form.addEventListener("submit", function (event) {
@@ -275,11 +292,17 @@
         mailtoHref +
         '">Stuur via je mail-app</a>';
 
-      if (!ensureEmailJs()) {
+      /* In-app browsers (WhatsApp/Insta/…) blokkeren EmailJS vaak → mail-app */
+      if (isInAppBrowser()) {
         setStatus(
-          "Formulier kon niet laden op dit toestel. " + mailtoLink + " of DM op Insta/Snap.",
+          "Deze browser blokkeert het formulier. We openen je mail-app… Of " +
+            mailtoLink +
+            " / DM @teambklf.garage.",
           true
         );
+        window.setTimeout(function () {
+          openMailto(mailtoHref);
+        }, 400);
         return;
       }
 
@@ -295,22 +318,26 @@
       if (submitBtn) submitBtn.disabled = true;
       setStatus("Bezig met versturen…");
 
-      window.emailjs
-        .send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, templateParams)
+      sendViaEmailJs(templateParams)
         .then(function () {
           form.classList.add("is-sent");
           setStatus("Bedankt! Je bericht is verzonden. We antwoorden zo snel mogelijk.");
           form.reset();
         })
         .catch(function (error) {
+          var detail =
+            (error && (error.text || error.message)) || "Probeer later opnieuw.";
           setStatus(
-            "Verzenden lukte niet (" +
-              errorMessage(error) +
-              "). " +
+            "Verzenden lukte niet op dit toestel. " +
               mailtoLink +
-              " of DM @teambklf.garage.",
+              " of DM @teambklf.garage. (" +
+              detail +
+              ")",
             true
           );
+          window.setTimeout(function () {
+            openMailto(mailtoHref);
+          }, 900);
         })
         .finally(function () {
           if (submitBtn) submitBtn.disabled = false;
